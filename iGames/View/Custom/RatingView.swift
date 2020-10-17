@@ -22,7 +22,7 @@ struct RatingView: View {
             .padding([.top, .bottom], 4)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(lineWidth: 1)
+                    .stroke(lineWidth: self.lineWidth)
                     .foregroundColor(self.color)
             )
             .onAppear {

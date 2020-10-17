@@ -15,6 +15,11 @@ struct HomeShimmer: View {
                 HomeTitleShimmer()
                     .padding(.top, -30)
                     .padding(.bottom, -40)
+                SmallCardShimmer()
+                
+                HomeTitleShimmer()
+                    .padding(.top, -30)
+                    .padding(.bottom, -40)
                 ForEach(0...2, id: \.self) { _ in
                     CardShimmer()
                         .frame(width: UIScreen.main.bounds.width)

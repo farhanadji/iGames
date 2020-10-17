@@ -9,112 +9,109 @@
 import SwiftUI
 import SDWebImageSwiftUI
 
-enum HomeView {
-    case profile
-    case detail
-}
 
 struct ContentView: View {
-    @State var isShowModal: Bool = false
-    @State var selectedView: HomeView = .profile
-    @State var selectedGame: Games = Games(id: 0, slug: "", name: "", released: "", background_image: "", rating: 0.0, parent_platforms: [], genres: [])
-    @ObservedObject var vm: HomeViewModel = HomeViewModel()
+    @State var timer = Timer.publish(every: 0.1, on: .current, in: .tracking).autoconnect()
+    @State var isShowHeader: Bool = false
+    @State var tab = "Explore"
+    @State var isShowDetailHeader: Bool = false
+    @ObservedObject var contentVM: ContentViewModel = .shared
+    @Environment(\.managedObjectContext) var managedObjectContext
     
     var body: some View {
-        NavigationView {
-            VStack(alignment: .leading) {
-                if self.vm.isLoadingList {
-                    HomeShimmer()
-                } else {
-                    List {
-                        Section(header:
-                            HStack{
-                                Text("Popular games")
-                                    .font(.system(
-                                        size: 28,
-                                        weight: .bold,
-                                        design: .default))
-                                    .padding()
+        ZStack(alignment: .bottom) {
+            ScrollView {
+                VStack {
+                    GeometryReader { geo in
+                        HStack {
+                            if self.tab == "Explore" {
+                                Text("Explore an \nexciting games")
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .font(.system(size: 32, weight: .bold, design: .default))
                                 
                                 Spacer()
+                                
+                                Button(action: {
+                                    self.contentVM.showSearchView()
+                                }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.black)
+                                            .frame(width: 40, height: 40)
+                                        
+                                        Image(systemName: "magnifyingglass")
+                                            .foregroundColor(Color.white)
+                                    }.fixedSize()
+                                }
+                            } else {
+                                Spacer()
                             }
-                            .padding(0)
-                            .listRowInsets(
-                                EdgeInsets(
-                                    top: 0,
-                                    leading: 0,
-                                    bottom: 0,
-                                    trailing: 0))
-                                .background(Color.white)
-                        ) {
-                            ForEach(self.vm.popularGame) { item in
-                                GameItem(game: item)
-                                    .listRowInsets(EdgeInsets())
-                                    .onTapGesture {
-                                        self.selectedGame = item
-                                        self.selectedView = .detail
-                                        self.isShowModal.toggle()
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, (UIApplication.shared.windows.first?.safeAreaInsets.top)! + 20)
+                        .onReceive(self.timer) { (_) in
+                            if !self.contentVM.isShowDetail {
+                                let y = geo.frame(in: .global).minY
+                                if -y > 140 {
+                                    self.isShowHeader = true
+                                } else {
+                                    self.isShowHeader = false
                                 }
                             }
                         }
-                        
-                        Section(header:
-                            HStack{
-                                Text("Top rated in 2020")
-                                    .font(.system(
-                                        size: 28,
-                                        weight: .bold,
-                                        design: .default))
-                                    .padding()
-                                
-                                Spacer()
-                            }
-                            .padding(0)
-                            .listRowInsets(
-                                EdgeInsets(
-                                    top: 0,
-                                    leading: 0,
-                                    bottom: 0,
-                                    trailing: 0))
-                                .background(Color.white)
-                        ) {
-                            ForEach(self.vm.topRateGame) { item in
-                                GameItem(game: item)
-                                    .listRowInsets(EdgeInsets())
-                                    .onTapGesture {
-                                        self.selectedView = .detail
-                                        self.isShowModal.toggle()
-                                }
-                            }
-                        }
-                    }.listStyle(PlainListStyle())
-                        .onAppear {
-                            UITableView.appearance().separatorStyle = .none
-                            UITableViewCell.appearance().selectionStyle = .none
+                    }.frame(height: tab == "Explore" ? 140 : 90)
+                    
+                    if tab == "Explore" {
+                        HomeView()
+                    } else if tab == "Favorite" {
+                        FavoriteView()
+                    } else {
+                        ProfileView()
                     }
                 }
             }
-                
-                
-            .navigationBarTitle("iGames")
-            .navigationBarItems(trailing:
-                Button(action: {
-                    self.selectedView = .profile
-                    self.isShowModal.toggle()
-                }, label: {
-                    Image(systemName: "person.circle")
-                        .resizable()
-                        .frame(width: 24, height: 24)
-                })
-            )
-        }
             
-        .sheet(isPresented: self.$isShowModal) {
-            if self.selectedView == .profile {
-                ProfileView(isShowProfile: self.$isShowModal)
-            } else {
-                DetailView(game: self.selectedGame)
+            if (isShowHeader || tab == "Favorite" || tab == "Account") && !self.contentVM.isShowDetail {
+                CollapsedNavBar()
             }
+            
+            HStack(spacing: 0) {
+                TabButton(title: "Explore", tab: self.$tab)
+                    .padding(.leading, 10)
+                Spacer(minLength: 0)
+                TabButton(title: "Favorite", tab: self.$tab)
+                Spacer(minLength: 0 )
+                TabButton(title: "Account", tab: self.$tab)
+                    .padding(.trailing, 10)
+            }
+            .frame(height: 70)
+            .background(Color.white)
+            .clipShape(Capsule())
+            .padding([.leading, .trailing], 20)
+            .padding(.bottom, (UIApplication.shared.windows.first?.safeAreaInsets.bottom)! + 20)
+            .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 0)
+            
+            if self.contentVM.isShowSearch {
+                VStack {
+                    SearchView()
+                }
+                .background(Color.white)
+                .animation(.linear(duration: 0.2))
+                .transition(.fade)
+            }
+            
+            
+            if self.contentVM.isShowDetail {
+                VStack {
+                    DetailView(timer: self.$timer)
+                }.background(Color.white)
+                .animation(.linear(duration: 0.2))
+                .transition(.fade)
+            }
+            
+        }.edgesIgnoringSafeArea([.top, .bottom])
+        .onAppear {
+            self.timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
         }
     }
 }
@@ -125,61 +122,34 @@ struct ContentView_Previews: PreviewProvider {
     }
 }
 
-struct GameItem: View {
-    var game: Games
+struct CollapsedNavBar: View {
+    @ObservedObject var contentVM: ContentViewModel = .shared
     var body: some View {
-        VStack {
-            WebImage(url: URL(string: game.background_image ?? ""))
-                .resizable()
-                .placeholder {
-                    Rectangle().foregroundColor(.gray)
-            }
-            .indicator(.activity)
-            .transition(.fade(duration: 0.5))
-            .frame(height: 230)
-            VStack(spacing: 0) {
-                HStack {
-                    Text((game.released?.toDate())?.getFormattedDate() ?? "-")
-                        .font(.system(
-                            size: 16,
-                            weight: .semibold,
-                            design: .default))
-                        .foregroundColor(Color.black.opacity(0.30))
-                        .padding(.top, 12)
-                    Spacer()
-                    ForEach(game.parent_platforms) { item in
-                        Image(item.slug ?? "")
-                            .resizable()
-                            .frame(width: 19, height: 19)
-                    }
-                } 
-                HStack {
-                    Text(game.name ?? "-")
-                        .font(.system(
-                            size: 25,
-                            weight: .bold,
-                            design: .default))
-                        .fixedSize(horizontal: false, vertical: false)
-                    Spacer()
-                    RatingView(
-                        rating: game.rating ?? 0.0,
-                        size: 14,
-                        lineWidth: 1
-                    )
-                        .frame(height: 5)
+        VStack
+        {
+            HStack(alignment: .center) {
+                Text("iGames")
+                    .font(.system(size: 22, weight: .bold, design: .default))
+                Spacer()
+                Button(action: {
+                    self.contentVM.showSearchView()
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.black)
+                            .frame(width: 30, height: 30)
+                        
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(Color.white)
+                    }.fixedSize()
+                    
                 }
-                .padding(.bottom, 30)
-            }.padding([.leading,.trailing])
+            }.padding(.horizontal)
+            .padding(.top, UIApplication.shared.windows.first?.safeAreaInsets.top)
+            .frame(height: 90)
+            .background(Color.white)
+            .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 4)
+            Spacer()
         }
-        .background(Color.white)
-        .cornerRadius(18)
-        .shadow(
-            color: Color.black.opacity(0.18),
-            radius: 4,
-            x: 0,
-            y: 4)
-            .frame(height: 350)
-            .padding([.leading,.trailing])
-            .padding(.bottom, 10)
     }
 }

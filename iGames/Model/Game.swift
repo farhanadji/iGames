@@ -8,7 +8,9 @@
 
 import Foundation
 
-struct Game: Codable {
+struct Game: Decodable {
     var id: Int?
     var description_raw: String?
+    var parent_platforms: [Platforms]
+    var genres: [Genres]
 }
