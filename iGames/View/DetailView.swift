@@ -51,12 +51,21 @@ struct DetailView: View {
                     
                     VStack(spacing: 10) {
                         HStack {
+                            if self.contentVM.gameReleased != nil {
                             Text((self.contentVM.gameReleased?.toDate())?.getFormattedDate() ?? "-")
                                 .font(.system(
                                         size: 16,
                                         weight: .semibold,
                                         design: .default))
                                 .foregroundColor(Color.black.opacity(0.3))
+                            } else {
+                                Text("To be announced")
+                                    .font(.system(
+                                            size: 16,
+                                            weight: .semibold,
+                                            design: .default))
+                                    .foregroundColor(Color.black.opacity(0.3))
+                            }
                             Spacer()
                             ForEach(self.detailVM.gameData.parent_platforms) { item in
                                 Image(item.slug ?? "")

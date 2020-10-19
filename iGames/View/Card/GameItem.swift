@@ -24,13 +24,19 @@ struct GameItem: View {
             .frame(height: 230)
             VStack(spacing: 0) {
                 HStack {
-                    Text((game.released?.toDate())?.getFormattedDate() ?? "-")
-                        .font(.system(
-                            size: 16,
-                            weight: .semibold,
-                            design: .default))
-                        .foregroundColor(Color.black.opacity(0.30))
-                        .padding(.top, 12)
+                    if game.released != nil {
+                        Text((game.released?.toDate())?.getFormattedDate() ?? "-")
+                            .font(.system(
+                                size: 16,
+                                weight: .semibold,
+                                design: .default))
+                            .foregroundColor(Color.black.opacity(0.30))
+                            .padding(.top, 12)
+                    } else {
+                        Text("To be announced")
+                            .font(.system(size: 14, weight: .regular, design: .default))
+                            .foregroundColor(Color.black.opacity(0.30))
+                    }
                     Spacer()
                     ForEach(game.parent_platforms ?? []) { item in
                         Image(item.slug ?? "")

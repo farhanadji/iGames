@@ -37,9 +37,15 @@ struct FavoriteGameItem: View {
                         .multilineTextAlignment(.leading)
                         .lineLimit(2)
                     
-                    Text((released?.toDate())?.getFormattedDate() ?? "-")
-                        .font(.system(size: 14, weight: .regular, design: .default))
-                        .foregroundColor(Color.black.opacity(0.30))
+                    if released != nil {
+                        Text((released?.toDate())?.getFormattedDate() ?? "-")
+                            .font(.system(size: 14, weight: .regular, design: .default))
+                            .foregroundColor(Color.black.opacity(0.30))
+                    } else {
+                        Text("To be announced")
+                            .font(.system(size: 14, weight: .regular, design: .default))
+                            .foregroundColor(Color.black.opacity(0.30))
+                    }
                 }
                 .padding(.top)
                 

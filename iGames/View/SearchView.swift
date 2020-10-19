@@ -53,7 +53,7 @@ struct SearchView: View {
                                     FavoriteGameItem(
                                         backgroundImage: game.background_image ?? "",
                                         name: game.name ?? "",
-                                        released: game.released ?? "")
+                                        released: game.released)
                                         .onTapGesture(perform: {
                                             self.contentVM.showGameDetail(
                                                 id: game.id,
@@ -95,6 +95,10 @@ struct SearchView: View {
             } else {
                 self.navigationBarPadding = (UIApplication.shared.windows.first?.safeAreaInsets.top)! + 90
             }
+        })
+        
+        .onDisappear(perform: {
+            self.searchVM.reset()
         })
     }
 }

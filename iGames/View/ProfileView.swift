@@ -51,7 +51,7 @@ struct ProfileView: View {
                         .frame(width: 16, height: 16)
                         .foregroundColor(Color.black.opacity(0.38))
                 }.onTapGesture(perform: {
-                    self.profileVM.isSetShowPreference = true
+                    self.profileVM.isSetShowPreference.toggle()
                 })
                 
                 if self.profileVM.isSetShowPreference {
@@ -78,6 +78,7 @@ struct ProfileView: View {
                             .cornerRadius(8)
                         })
                     }
+                    .padding(.bottom, 120)
                 }
             }
         }
